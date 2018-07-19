@@ -352,6 +352,7 @@ export class NodeDebugAdapter extends ChromeDebugAdapter {
         const nodeProcess = cp.spawn(runtimeExecutable, launchArgs, spawnOpts);
         return new Promise<void>((resolve, reject) => {
             this._nodeProcessId = nodeProcess.pid;
+            logger.log(`||||process id = ${nodeProcess.pid}`);
             nodeProcess.on('error', (error) => {
                 reject(errors.cannotLaunchDebugTarget(errors.toString()));
                 const msg = `Node process error: ${error}`;
@@ -361,16 +362,10 @@ export class NodeDebugAdapter extends ChromeDebugAdapter {
             nodeProcess.on('exit', () => {
                 const msg = 'Target exited';
                 logger.log(msg);
-                if (!this.isExtensionHost()) {
-                    this.terminateSession(msg);
-                }
             });
             nodeProcess.on('close', (code) => {
                 const msg = 'Target closed';
                 logger.log(msg);
-                if (!this.isExtensionHost()) {
-                    this.terminateSession(msg);
-                }
             });
 
             const noDebugMode = (<ILaunchRequestArguments>this._launchAttachArgs).noDebug;
