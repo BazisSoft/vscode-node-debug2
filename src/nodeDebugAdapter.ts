@@ -21,6 +21,7 @@ import * as wsl from './wslSupport';
 
 import * as nls from 'vscode-nls';
 import { FinishedStartingUpEventArguments } from 'vscode-chrome-debug-core/lib/src/executionTimingsReporter';
+import * as Registry from 'winreg';
 let localize = nls.loadMessageBundle();
 
 const DefaultSourceMapPathOverrides: ISourceMapPathOverrides = {
@@ -31,7 +32,6 @@ const DefaultSourceMapPathOverrides: ISourceMapPathOverrides = {
 };
 
 export class NodeDebugAdapter extends ChromeDebugAdapter {
-    private static NODE = 'node';
     private static RUNINTERMINAL_TIMEOUT = 5000;
     private static NODE_TERMINATION_POLL_INTERVAL = 3000;
     private static DEBUG_BRK_DEP_MSG = /\(node:\d+\) \[DEP0062\] DeprecationWarning: `node --inspect --debug-brk` is deprecated\. Please use `node --inspect-brk` instead\.\s*/;
@@ -78,6 +78,25 @@ export class NodeDebugAdapter extends ChromeDebugAdapter {
         return capabilities;
     }
 
+    private async GetExecutableName(bazis_version) {
+        var promise = new Promise<string>(function (resolve, reject) {
+            let regKey = new Registry({
+                hive: Registry.HKCU,
+                key: '\\Software\\BazisSoft\\' + bazis_version
+            })
+            regKey.values((err, items) => {
+                if (!err)
+                    for (var i = 0; i < items.length; i++) {
+                        let regItem = items[i];
+                        if (regItem.name === 'Path') {
+                            resolve(regItem.value)
+                        }
+                    }
+            });
+        });
+        return await promise;
+    }
+
     public async launch(args: ILaunchRequestArguments): Promise<void> {
         if (args.console && args.console !== 'internalConsole' && typeof args._suppressConsoleOutput === 'undefined') {
             args._suppressConsoleOutput = true;
@@ -98,32 +117,9 @@ export class NodeDebugAdapter extends ChromeDebugAdapter {
         }
 
         let runtimeExecutable = args.runtimeExecutable;
-        if (args.useWSL) {
-            runtimeExecutable = runtimeExecutable || NodeDebugAdapter.NODE;
-        } else if (runtimeExecutable) {
-            if (path.isAbsolute(runtimeExecutable)) {
-                const re = pathUtils.findExecutable(runtimeExecutable, args.env);
-                if (!re) {
-                    return this.getNotExistErrorResponse('runtimeExecutable', runtimeExecutable);
-                }
-
-                runtimeExecutable = re;
-            } else {
-                const re = pathUtils.findOnPath(runtimeExecutable, args.env);
-                if (!re) {
-                    return this.getRuntimeNotOnPathErrorResponse(runtimeExecutable);
-                }
-
-                runtimeExecutable = re;
-            }
-        } else {
-            const re = pathUtils.findOnPath(NodeDebugAdapter.NODE, args.env);
-            if (!re) {
-                return Promise.reject(errors.runtimeNotFound(NodeDebugAdapter.NODE));
-            }
-
-            // use node from PATH
-            runtimeExecutable = re;
+        if (!runtimeExecutable){
+            let bazis_version = 'Bazis10'
+            runtimeExecutable = await this.GetExecutableName(bazis_version);
         }
 
         this._continueAfterConfigDone = !args.stopOnEntry;
