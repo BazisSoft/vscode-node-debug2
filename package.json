@@ -16,11 +16,13 @@
   "dependencies": {
     "vscode-chrome-debug-core": "^6.3.1-patch.0",
     "vscode-debugadapter": "^1.30.0-pre.2",
-    "vscode-nls": "^3.2.1"
+    "vscode-nls": "^3.2.1",
+    "winreg": "^1.2.2"
   },
   "devDependencies": {
     "@types/mocha": "^2.2.47",
     "@types/node": "^6.0.52",
+    "@types/winreg": "^1.2.30",
     "del": "^2.2.2",
     "event-stream": "^3.3.4",
     "find-free-port": "^1.0.2",
