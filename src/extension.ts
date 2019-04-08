@@ -11,14 +11,13 @@ import * as Core from 'vscode-chrome-debug-core';
 const initialConfigurations = [
     {
         name: 'Launch Program',
-        type: 'node2',
+        type: 'bazis2',
         request: 'launch',
-        program: '${workspaceFolder}/app.js',
-        cwd: '${workspaceFolder}'
+        program: '${file}'
     },
     {
         name: 'Attach to Process',
-        type: 'node2',
+        type: 'bazis2',
         request: 'attach',
         port: 9229
     }

@@ -107,7 +107,7 @@ export class NodeDebugAdapter extends ChromeDebugAdapter {
             return this.doAttach(args.__restart.port, undefined, args.address, args.timeout);
         }
 
-        const port = args.port || utils.random(3000, 50000);
+        const port = args.port || 9229;
 
         if (args.useWSL && !wsl.subsystemForLinuxPresent()) {
             return Promise.reject(new ErrorWithMessage(<DebugProtocol.Message>{
@@ -117,8 +117,11 @@ export class NodeDebugAdapter extends ChromeDebugAdapter {
         }
 
         let runtimeExecutable = args.runtimeExecutable;
-        if (!runtimeExecutable){
-            let bazis_version = 'Bazis10'
+        let bazis_version = 'Bazis11';
+        if (args.env && args.env.version) {
+            bazis_version = args.env.version;
+        }
+        if (!runtimeExecutable) {
             runtimeExecutable = await this.GetExecutableName(bazis_version);
         }
 
@@ -129,62 +132,20 @@ export class NodeDebugAdapter extends ChromeDebugAdapter {
         }
 
         let programPath = args.program;
-        if (programPath) {
-            if (!path.isAbsolute(programPath)) {
-                return this.getRelativePathErrorResponse('program', programPath);
-            }
-
-            if (!fs.existsSync(programPath)) {
-                if (fs.existsSync(programPath + '.js')) {
-                    programPath += '.js';
-                } else {
-                    return this.getNotExistErrorResponse('program', programPath);
-                }
-            }
-
-            programPath = path.normalize(programPath);
-            if (pathUtils.normalizeDriveLetter(programPath) !== pathUtils.realPath(programPath)) {
-                logger.warn(localize('program.path.case.mismatch.warning', 'Program path uses differently cased character as file on disk; this might result in breakpoints not being hit.'));
-            }
-        }
 
         this._captureFromStd = args.outputCapture === 'std';
 
         const resolvedProgramPath = await this.resolveProgramPath(programPath, args.sourceMaps);
-        let program: string;
-        let cwd = args.cwd;
-        if (cwd) {
-            if (!path.isAbsolute(cwd)) {
-                return this.getRelativePathErrorResponse('cwd', cwd);
-            }
-
-            if (!fs.existsSync(cwd)) {
-                return this.getNotExistErrorResponse('cwd', cwd);
-            }
-
-            // if working dir is given and if the executable is within that folder, we make the executable path relative to the working dir
-            if (resolvedProgramPath) {
-                program = path.relative(cwd, resolvedProgramPath);
-            }
-        } else if (resolvedProgramPath) {
-            // if no working dir given, we use the direct folder of the executable
-            cwd = path.dirname(resolvedProgramPath);
-            program = path.basename(resolvedProgramPath);
-        }
+        let program: string = resolvedProgramPath;
+        let cwd = args.cwd || path.dirname(program);
 
         const runtimeArgs = args.runtimeArgs || [];
         const programArgs = args.args || [];
 
-        const debugArgs = detectSupportedDebugArgsForLaunch(args, runtimeExecutable, args.env);
+        // const debugArgs = detectSupportedDebugArgsForLaunch(args, runtimeExecutable, args.env);
         let launchArgs = [];
-        if (!args.noDebug && !args.port) {
-            // Always stop on entry to set breakpoints
-            if (debugArgs === DebugArgs.Inspect_DebugBrk) {
-                launchArgs.push(`--inspect=${port}`);
-                launchArgs.push('--debug-brk');
-            } else {
-                launchArgs.push(`--inspect-brk=${port}`);
-            }
+        if (!args.noDebug) {
+            launchArgs.push(`--inspect-brk=${port}`);
         }
 
         launchArgs = runtimeArgs.concat(launchArgs, program ? [program] : [], programArgs);
@@ -377,7 +338,7 @@ export class NodeDebugAdapter extends ChromeDebugAdapter {
             });
 
             resolve();
-         });
+        });
     }
 
     private captureStderr(nodeProcess: cp.ChildProcess, noDebugMode: boolean): void {
@@ -495,7 +456,7 @@ export class NodeDebugAdapter extends ChromeDebugAdapter {
                 logger.log('Not killing launched process. It has PID=1');
             } else {
                 logger.log('Killing process with id: ' + this._nodeProcessId);
-                utils.killTree(this._nodeProcessId);
+                //utils.killTree(this._nodeProcessId);
             }
 
             this._nodeProcessId = 0;
@@ -505,7 +466,7 @@ export class NodeDebugAdapter extends ChromeDebugAdapter {
     public async terminateSession(reason: string, args?: DebugProtocol.DisconnectArguments): Promise<void> {
         if (this.isExtensionHost() && args && typeof (<any>args).restart === 'boolean' && (<any>args).restart) {
             this._nodeProcessId = 0;
-        } else if (this._restartMode && !args)  {
+        } else if (this._restartMode && !args) {
             // If restart: true, only kill the process when the client has disconnected. 'args' present implies that a Disconnect request was received
             this._nodeProcessId = 0;
         }
@@ -565,22 +526,25 @@ export class NodeDebugAdapter extends ChromeDebugAdapter {
 
             return programPath;
         } else {
+            // Bazis will compile .ts file automtically then create and run .js file
+
             // node cannot execute the program directly
-            if (!sourceMaps) {
-                return Promise.reject<string>(errors.cannotLaunchBecauseSourceMaps(programPath));
-            }
+            // if (!sourceMaps) {
+            //     return Promise.reject<string>(errors.cannotLaunchBecauseSourceMaps(programPath));
+            // }
 
-            const generatedPath = await this._sourceMapTransformer.getGeneratedPathFromAuthoredPath(programPath);
-            if (!generatedPath) { // cannot find generated file
-                if (this._launchAttachArgs.outFiles || this._launchAttachArgs.outDir) {
-                    return Promise.reject<string>(errors.cannotLaunchBecauseJsNotFound(programPath));
-                } else {
-                    return Promise.reject<string>(errors.cannotLaunchBecauseOutFiles(programPath));
-                }
-            }
+            //const generatedPath = await this._sourceMapTransformer.getGeneratedPathFromAuthoredPath(programPath);
+            // if (!generatedPath) { // cannot find generated file
+            //     if (this._launchAttachArgs.outFiles || this._launchAttachArgs.outDir) {
+            //         return Promise.reject<string>(errors.cannotLaunchBecauseJsNotFound(programPath));
+            //     } else {
+            //         return Promise.reject<string>(errors.cannotLaunchBecauseOutFiles(programPath));
+            //     }
+            // }
 
-            logger.log(`Launch: program '${programPath}' seems to be the source; launch the generated file '${generatedPath}' instead`);
-            return generatedPath;
+            // logger.log(`Launch: program '${programPath}' seems to be the source; launch the generated file '${generatedPath}' instead`);
+            // return generatedPath;
+            return programPath;
         }
     }
 
@@ -724,7 +688,7 @@ export class NodeDebugAdapter extends ChromeDebugAdapter {
             try {
                 if (this._nodeProcessId) {
                     // kill with signal=0 just test for whether the proc is alive. It throws if not.
-                    process.kill(this._nodeProcessId, 0);
+                    //process.kill(this._nodeProcessId, 0);
                 } else {
                     clearInterval(intervalId);
                 }
@@ -777,13 +741,13 @@ export class NodeDebugAdapter extends ChromeDebugAdapter {
         return this.getErrorResponseWithInfoLink(2008, format, { path }, 20003);
     }
 
-    private getRuntimeNotOnPathErrorResponse(runtime: string): Promise<void> {
-        return Promise.reject(new ErrorWithMessage(<DebugProtocol.Message>{
-            id: 2001,
-            format: localize('VSND2001', "Cannot find runtime '{0}' on PATH. Make sure to have '{0}' installed.", '{_runtime}'),
-            variables: { _runtime: runtime }
-        }));
-    }
+    // private getRuntimeNotOnPathErrorResponse(runtime: string): Promise<void> {
+    //     return Promise.reject(new ErrorWithMessage(<DebugProtocol.Message>{
+    //         id: 2001,
+    //         format: localize('VSND2001', "Cannot find runtime '{0}' on PATH. Make sure to have '{0}' installed.", '{_runtime}'),
+    //         variables: { _runtime: runtime }
+    //     }));
+    // }
 
     /**
      * Send error response with 'More Information' link.
@@ -831,7 +795,7 @@ export class NodeDebugAdapter extends ChromeDebugAdapter {
 
 function getSourceMapPathOverrides(cwd: string, sourceMapPathOverrides?: ISourceMapPathOverrides): ISourceMapPathOverrides {
     return sourceMapPathOverrides ? resolveCwdPattern(cwd, sourceMapPathOverrides, /*warnOnMissing=*/true) :
-            resolveCwdPattern(cwd, DefaultSourceMapPathOverrides, /*warnOnMissing=*/false);
+        resolveCwdPattern(cwd, DefaultSourceMapPathOverrides, /*warnOnMissing=*/false);
 }
 
 function fixNodeInternalsSkipFiles(args: ICommonRequestArgs): void {
@@ -888,39 +852,39 @@ export enum DebugArgs {
     Inspect_DebugBrk
 }
 
-const defaultDebugArgs = DebugArgs.InspectBrk;
-function detectSupportedDebugArgsForLaunch(config: ILaunchRequestArguments, runtimeExecutable: string, env: any): DebugArgs {
-    if (config.__nodeVersion || (config.runtimeVersion  && config.runtimeVersion !== 'default')) {
-        return getSupportedDebugArgsForVersion(config.__nodeVersion || config.runtimeVersion);
-    } else if (config.runtimeExecutable) {
-        logger.log('Using --inspect-brk because a runtimeExecutable is set');
-        return defaultDebugArgs;
-    } else {
-        // only determine version if no runtimeExecutable is set (and 'node' on PATH is used)
-        logger.log('Spawning `node --version` to determine supported debug args');
-        let result: cp.SpawnSyncReturns<string>;
-        try {
-            result = cp.spawnSync(runtimeExecutable, ['--version']);
-        } catch (e) {
-            logger.error('Node version detection failed: ' + (e && e.message));
-        }
+// const defaultDebugArgs = DebugArgs.InspectBrk;
+// function detectSupportedDebugArgsForLaunch(config: ILaunchRequestArguments, runtimeExecutable: string, env: any): DebugArgs {
+//     if (config.__nodeVersion || (config.runtimeVersion  && config.runtimeVersion !== 'default')) {
+//         return getSupportedDebugArgsForVersion(config.__nodeVersion || config.runtimeVersion);
+//     } else if (config.runtimeExecutable) {
+//         logger.log('Using --inspect-brk because a runtimeExecutable is set');
+//         return defaultDebugArgs;
+//     } else {
+//         // only determine version if no runtimeExecutable is set (and 'node' on PATH is used)
+//         logger.log('Spawning `node --version` to determine supported debug args');
+//         let result: cp.SpawnSyncReturns<string>;
+//         try {
+//             result = cp.spawnSync(runtimeExecutable, ['--version']);
+//         } catch (e) {
+//             logger.error('Node version detection failed: ' + (e && e.message));
+//         }
 
-        const semVerString = result.stdout ? result.stdout.toString().trim() : undefined;
-        if (semVerString) {
-            return getSupportedDebugArgsForVersion(semVerString);
-        } else {
-            logger.log('Using --inspect-brk because we couldn\'t get a version from node');
-            return defaultDebugArgs;
-        }
-    }
-}
+//         const semVerString = result.stdout ? result.stdout.toString().trim() : undefined;
+//         if (semVerString) {
+//             return getSupportedDebugArgsForVersion(semVerString);
+//         } else {
+//             logger.log('Using --inspect-brk because we couldn\'t get a version from node');
+//             return defaultDebugArgs;
+//         }
+//     }
+// }
 
-function getSupportedDebugArgsForVersion(semVerString): DebugArgs {
-    if (utils.compareSemver(semVerString, 'v7.6.0') >= 0) {
-        logger.log(`Using --inspect-brk, Node version ${semVerString} detected`);
-        return DebugArgs.InspectBrk;
-    } else {
-        logger.log(`Using --inspect --debug-brk, Node version ${semVerString} detected`);
-        return DebugArgs.Inspect_DebugBrk;
-    }
-}
+// function getSupportedDebugArgsForVersion(semVerString): DebugArgs {
+//     if (utils.compareSemver(semVerString, 'v7.6.0') >= 0) {
+//         logger.log(`Using --inspect-brk, Node version ${semVerString} detected`);
+//         return DebugArgs.InspectBrk;
+//     } else {
+//         logger.log(`Using --inspect --debug-brk, Node version ${semVerString} detected`);
+//         return DebugArgs.Inspect_DebugBrk;
+//     }
+// }

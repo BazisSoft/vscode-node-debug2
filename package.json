@@ -1,15 +1,15 @@
 {
-  "name": "node-debug2",
-  "displayName": "Node Debug",
-  "version": "1.25.6",
-  "publisher": "ms-vscode",
+  "name": "bazis-debug2",
+  "displayName": "Debugger for Bazis-Woodworker's scripts",
+  "version": "0.5.0",
+  "publisher": "BazisSoft",
   "description": "%extension.description%",
-  "icon": "images/node-debug-icon.png",
+  "icon": "images/bazis-logo.png",
   "categories": [
     "Debuggers"
   ],
   "author": {
-    "name": "Microsoft Corporation"
+    "name": "BazisSoft"
   },
   "license": "MIT",
   "private": true,
@@ -60,15 +60,14 @@
     "package": "gulp package"
   },
   "engines": {
-    "vscode": "^1.19.0",
-    "node": ">=6.3.0"
+    "vscode": "^1.19.0"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Microsoft/vscode-node-debug2.git"
+    "url": "https://github.com/BazisSoft/vscode-bazis-debug2.git"
   },
   "bugs": {
-    "url": "https://github.com/Microsoft/vscode-node-debug2/issues"
+    "url": "https://github.com/BazisSoft/vscode-bazis-debug2/issues"
   },
   "contributes": {
     "breakpoints": [
@@ -76,139 +75,26 @@
         "language": "javascript"
       },
       {
-        "language": "javascriptreact"
+        "language": "typescript"
       }
     ],
     "debuggers": [
       {
-        "type": "extensionHost",
-        "label": "VS Code Extension Development",
-        "program": "./out/src/nodeDebug.js",
-        "runtime": "node",
-        "aiKey": "AIF-d9b70cd4-b9f9-4d70-929b-a071c400b217",
-        "configurationSnippets": [
-          {
-            "label": "%extensionHost.snippet.launch.label%",
-            "description": "%extensionHost.snippet.launch.description%",
-            "body": {
-              "type": "extensionHost",
-              "request": "launch",
-              "name": "%extensionHost.launch.config.name%",
-              "runtimeExecutable": "^\"\\${execPath}\"",
-              "args": [
-                "^\"--extensionDevelopmentPath=\\${workspaceFolder}\""
-              ],
-              "outFiles": [
-                "^\"\\${workspaceFolder}/out/**/*.js\""
-              ],
-              "preLaunchTask": "npm"
-            }
-          }
-        ],
-        "configurationAttributes": {
-          "launch": {
-            "required": [
-              "runtimeExecutable",
-              "args"
-            ],
-            "properties": {
-              "runtimeExecutable": {
-                "type": [
-                  "string",
-                  "null"
-                ],
-                "description": "%extensionHost.launch.runtimeExecutable.description%",
-                "default": "${execPath}"
-              },
-              "args": {
-                "type": "array",
-                "description": "%node.launch.args.description%",
-                "items": {
-                  "type": "string"
-                },
-                "default": [
-                  "--extensionDevelopmentPath=${workspaceFolder}"
-                ]
-              },
-              "env": {
-                "type": "object",
-                "additionalProperties": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "description": "%extensionHost.launch.env.description%",
-                "default": {}
-              },
-              "stopOnEntry": {
-                "type": "boolean",
-                "description": "%extensionHost.launch.stopOnEntry.description%",
-                "default": true
-              },
-              "sourceMaps": {
-                "type": "boolean",
-                "description": "%node.sourceMaps.description%",
-                "default": true
-              },
-              "outDir": {
-                "type": [
-                  "string",
-                  "null"
-                ],
-                "deprecationMessage": "%outDir.deprecationMessage%",
-                "default": "${workspaceFolder}/out"
-              },
-              "outFiles": {
-                "type": "array",
-                "description": "%node.outFiles.description%",
-                "items": {
-                  "type": "string"
-                },
-                "default": [
-                  "${workspaceFolder}/out/**/*.js"
-                ]
-              },
-              "smartStep": {
-                "type": "boolean",
-                "description": "%node.smartStep.description%",
-                "default": true
-              },
-              "skipFiles": {
-                "type": "array",
-                "description": "%node.skipFiles.description%",
-                "items": {
-                  "type": "string"
-                },
-                "default": []
-              },
-              "trace": {
-                "type": [
-                  "boolean",
-                  "string"
-                ],
-                "description": "%node.trace.description%",
-                "default": true
-              }
-            }
-          }
-        }
-      },
-      {
-        "type": "node2",
-        "label": "Node.js v6.3+",
+        "type": "bazis",
+        "label": "Bazis11",
         "program": "./out/src/nodeDebug.js",
         "runtime": "node",
         "aiKey": "AIF-d9b70cd4-b9f9-4d70-929b-a071c400b217",
         "configurationAttributes": {
           "launch": {
             "required": [
-              "cwd"
+              "program"
             ],
             "properties": {
               "program": {
                 "type": "string",
-                "description": "%node.launch.program.description%"
+                "description": "%node.launch.program.description%",
+                "default": "${file}"
               },
               "stopOnEntry": {
                 "type": "boolean",
@@ -235,7 +121,7 @@
               "restart": {
                 "type": "boolean",
                 "description": "%node.restart.description%",
-                "default": true
+                "default": false
               },
               "cwd": {
                 "type": "string",
