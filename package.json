@@ -52,7 +52,6 @@
     "build": "gulp build",
     "watch": "gulp watch",
     "test": "mocha --timeout 20000 -s 2000 -u tdd --colors --reporter node_modules/vscode-chrome-debug-core-testsupport/out/loggingReporter.js ./out/test/",
-    "vscode:prepublish": "gulp verify-no-linked-modules && gulp build",
     "tslint": "gulp tslint",
     "publish": "gulp publish",
     "patch": "npm version patch -m '%s'",
@@ -80,7 +79,7 @@
     ],
     "debuggers": [
       {
-        "type": "bazis",
+        "type": "bazis2",
         "label": "Bazis11",
         "program": "./out/src/nodeDebug.js",
         "runtime": "node",

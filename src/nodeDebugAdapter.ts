@@ -458,7 +458,13 @@ export class NodeDebugAdapter extends ChromeDebugAdapter {
                 logger.log('Killing process with id: ' + this._nodeProcessId);
                 //utils.killTree(this._nodeProcessId);
             }
-
+            if (this.chrome.Runtime) {
+                this.chrome.Runtime.evaluate({
+                    expression: '[Action.Cancel()]',
+                    returnByValue: true,
+                    contextId: 1
+                })
+            }
             this._nodeProcessId = 0;
         }
     }
