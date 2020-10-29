@@ -14,7 +14,7 @@ import * as fs from 'fs';
 import * as cp from 'child_process';
 
 import { ILaunchRequestArguments, IAttachRequestArguments, ICommonRequestArgs } from './nodeDebugInterfaces';
-import * as pathUtils from './pathUtils';
+//import * as pathUtils from './pathUtils';
 import * as utils from './utils';
 import * as errors from './errors';
 import * as wsl from './wslSupport';
@@ -148,7 +148,7 @@ export class NodeDebugAdapter extends ChromeDebugAdapter {
             launchArgs.push(`--inspect-brk=${port}`);
         }
 
-        launchArgs = runtimeArgs.concat(launchArgs, program ? [program] : [], programArgs);
+        launchArgs = runtimeArgs.concat(launchArgs, programPath ? [programPath] : [], programArgs);
 
         const wslLaunchArgs = wsl.createLaunchArg(args.useWSL, args.console === 'externalTerminal', cwd, runtimeExecutable, launchArgs, program);
         // if using subsystem for linux, we will trick the debugger to map source files
@@ -532,14 +532,13 @@ export class NodeDebugAdapter extends ChromeDebugAdapter {
 
             return programPath;
         } else {
-            // Bazis will compile .ts file automtically then create and run .js file
 
             // node cannot execute the program directly
             // if (!sourceMaps) {
             //     return Promise.reject<string>(errors.cannotLaunchBecauseSourceMaps(programPath));
             // }
 
-            //const generatedPath = await this._sourceMapTransformer.getGeneratedPathFromAuthoredPath(programPath);
+            // const generatedPath = await this._sourceMapTransformer.getGeneratedPathFromAuthoredPath(programPath);
             // if (!generatedPath) { // cannot find generated file
             //     if (this._launchAttachArgs.outFiles || this._launchAttachArgs.outDir) {
             //         return Promise.reject<string>(errors.cannotLaunchBecauseJsNotFound(programPath));
@@ -550,7 +549,14 @@ export class NodeDebugAdapter extends ChromeDebugAdapter {
 
             // logger.log(`Launch: program '${programPath}' seems to be the source; launch the generated file '${generatedPath}' instead`);
             // return generatedPath;
-            return programPath;
+
+
+            // Bazis will compile .ts file automtically then create and run .js file
+            let parsed = path.parse(programPath);
+            if (parsed.ext === '.ts'){
+                parsed.ext = '.js'
+            }
+            return path.format(parsed);
         }
     }
 
@@ -731,21 +737,21 @@ export class NodeDebugAdapter extends ChromeDebugAdapter {
     /**
      * 'Path does not exist' error
      */
-    private getNotExistErrorResponse(attribute: string, path: string): Promise<void> {
+    /*private getNotExistErrorResponse(attribute: string, path: string): Promise<void> {
         return Promise.reject(new ErrorWithMessage(<DebugProtocol.Message>{
             id: 2007,
             format: localize('attribute.path.not.exist', "Attribute '{0}' does not exist ('{1}').", attribute, '{path}'),
             variables: { path }
         }));
-    }
+    }*/
 
     /**
      * 'Path not absolute' error with 'More Information' link.
      */
-    private getRelativePathErrorResponse(attribute: string, path: string): Promise<void> {
+    /*private getRelativePathErrorResponse(attribute: string, path: string): Promise<void> {
         const format = localize('attribute.path.not.absolute', "Attribute '{0}' is not absolute ('{1}'); consider adding '{2}' as a prefix to make it absolute.", attribute, '{path}', '${workspaceFolder}/');
         return this.getErrorResponseWithInfoLink(2008, format, { path }, 20003);
-    }
+    }*/
 
     // private getRuntimeNotOnPathErrorResponse(runtime: string): Promise<void> {
     //     return Promise.reject(new ErrorWithMessage(<DebugProtocol.Message>{
@@ -758,7 +764,7 @@ export class NodeDebugAdapter extends ChromeDebugAdapter {
     /**
      * Send error response with 'More Information' link.
      */
-    private getErrorResponseWithInfoLink(code: number, format: string, variables: any, infoId: number): Promise<void> {
+    /*private getErrorResponseWithInfoLink(code: number, format: string, variables: any, infoId: number): Promise<void> {
         return Promise.reject(new ErrorWithMessage(<DebugProtocol.Message>{
             id: code,
             format,
@@ -767,7 +773,7 @@ export class NodeDebugAdapter extends ChromeDebugAdapter {
             url: 'http://go.microsoft.com/fwlink/?linkID=534832#_' + infoId.toString(),
             urlLabel: localize('more.information', 'More Information')
         }));
-    }
+    }*/
 
     protected getReadonlyOrigin(aPath: string): string {
         return path.isAbsolute(aPath) || aPath.startsWith(ChromeDebugAdapter.EVAL_NAME_PREFIX) ?
