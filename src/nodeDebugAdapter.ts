@@ -145,7 +145,12 @@ export class NodeDebugAdapter extends ChromeDebugAdapter {
         // const debugArgs = detectSupportedDebugArgsForLaunch(args, runtimeExecutable, args.env);
         let launchArgs = [];
         if (!args.noDebug) {
-            launchArgs.push(`--inspect-brk=${port}`);
+            /*if (bazis_version == 'Bazis10') {
+                launchArgs.push(`--debug-brk`);
+                launchArgs.push(`--inspect=${port}`);
+            }
+            else*/
+                launchArgs.push(`--inspect-brk=${port}`);
         }
 
         launchArgs = runtimeArgs.concat(launchArgs, programPath ? [programPath] : [], programArgs);
@@ -231,6 +236,8 @@ export class NodeDebugAdapter extends ChromeDebugAdapter {
 
     protected commonArgs(args: ICommonRequestArgs): void {
         args.sourceMapPathOverrides = getSourceMapPathOverrides(args.cwd, args.sourceMapPathOverrides);
+        args.skipFiles = args.skipFiles || [];
+        args.skipFiles.push("<node_internals>/*");
         fixNodeInternalsSkipFiles(args);
         args.showAsyncStacks = typeof args.showAsyncStacks === 'undefined' || args.showAsyncStacks;
 
@@ -551,9 +558,9 @@ export class NodeDebugAdapter extends ChromeDebugAdapter {
             // return generatedPath;
 
 
-            // Bazis will compile .ts file automtically then create and run .js file
+            // Bazis will compile .ts file automtically then create and run .js  file
             let parsed = path.parse(programPath);
-            if (parsed.ext === '.ts'){
+            if (parsed.ext === '.ts') {
                 parsed.ext = '.js'
             }
             return path.format(parsed);
