@@ -1,7 +1,7 @@
 {
   "name": "bazis-debug2",
   "displayName": "Debugger for Bazis-Woodworker's scripts",
-  "version": "0.5.0",
+  "version": "0.1.0",
   "publisher": "BazisSoft",
   "description": "%extension.description%",
   "icon": "images/bazis-logo.png",
