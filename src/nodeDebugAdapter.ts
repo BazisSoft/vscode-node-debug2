@@ -117,7 +117,7 @@ export class NodeDebugAdapter extends ChromeDebugAdapter {
         }
 
         let runtimeExecutable = args.runtimeExecutable;
-        let bazis_version = 'Bazis11';
+        let bazis_version = 'Bazis';
         if (args.env && args.env.version) {
             bazis_version = args.env.version;
         }
