@@ -101,6 +101,9 @@ export class NodeDebugAdapter extends ChromeDebugAdapter {
         if (args.console && args.console !== 'internalConsole' && typeof args._suppressConsoleOutput === 'undefined') {
             args._suppressConsoleOutput = true;
         }
+        if (!args.timeout){
+            args.timeout = 30000;
+        }
 
         await super.launch(args);
         if (args.__restart && typeof args.__restart.port === 'number') {
