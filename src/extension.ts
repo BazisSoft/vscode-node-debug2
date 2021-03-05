@@ -18,7 +18,7 @@ function ShowDTSDownloadError(err){
 }
 
 function addDeclarationFiles() {
-    const loadPath = 'https://raw.githubusercontent.com/BazisSoft/Scripts/add-declaration-files/node_modules/%40types/bazis/index.d.ts';
+    const loadPath = 'https://raw.githubusercontent.com/BazisSoft/Scripts/master/node_modules/%40types/bazis/index.d.ts';
     //create directories
     //TODO: find better way, if it exists
     let declPath = path.join(vscode.workspace.rootPath, '/node_modules');
@@ -89,6 +89,24 @@ class ExtensionHostDebugConfigurationProvider implements vscode.DebugConfigurati
         //Object.assign(debugConfiguration, initialConfigurations);
         return debugConfiguration;
     }
+}
+
+function getProgram(): string {
+    const packageJsonPath = path.join(vscode.workspace.rootPath, 'package.json');
+    let program = '';
+
+    // Get 'program' from package.json 'main' or 'npm start'
+    try {
+        const jsonContent = fs.readFileSync(packageJsonPath, 'utf8');
+        const jsonObject = JSON.parse(jsonContent);
+        if (jsonObject.main) {
+            program = jsonObject.main;
+        } else if (jsonObject.scripts && typeof jsonObject.scripts.start === 'string') {
+            program = (<string>jsonObject.scripts.start).split(' ').pop();
+        }
+    } catch (error) { }
+
+    return program;
 }
 
 function provideInitialConfigurations(): string {
