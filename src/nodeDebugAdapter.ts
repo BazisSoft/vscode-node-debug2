@@ -240,8 +240,8 @@ export class NodeDebugAdapter extends ChromeDebugAdapter {
     protected commonArgs(args: ICommonRequestArgs): void {
         args.sourceMapPathOverrides = getSourceMapPathOverrides(args.cwd, args.sourceMapPathOverrides);
         args.skipFiles = args.skipFiles || [];
-        args.skipFiles.push("<node_internals>/*");
         fixNodeInternalsSkipFiles(args);
+        args.skipFiles.push("<node_internals>/*");
         args.showAsyncStacks = typeof args.showAsyncStacks === 'undefined' || args.showAsyncStacks;
 
         this._restartMode = args.restart;
