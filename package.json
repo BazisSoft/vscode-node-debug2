@@ -1,7 +1,7 @@
 {
   "name": "bazis-debug2",
   "displayName": "Debugger for Bazis-Woodworker's scripts",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "publisher": "BazisSoft",
   "description": "Расширение для отлакди скриптов в Базис 2021",
   "icon": "images/bazis-logo.png",

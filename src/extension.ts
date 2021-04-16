@@ -17,44 +17,97 @@ function ShowDTSDownloadError(err){
     vscode.window.showErrorMessage('Declaration download error.', err);
 }
 
-function addDeclarationFiles() {
-    const loadPath = 'https://raw.githubusercontent.com/BazisSoft/Scripts/master/node_modules/%40types/bazis/index.d.ts';
-    //create directories
-    //TODO: find better way, if it exists
-    let declPath = path.join(vscode.workspace.rootPath, '/node_modules');
-    if (!fs.existsSync(declPath)){
-        fs.mkdirSync(declPath);
-    };
-    declPath = path.join(declPath, '/@types');
-    if (!fs.existsSync(declPath)){
-        fs.mkdirSync(declPath);
-    };
-    declPath = path.join(declPath, '/bazis');
-    if (!fs.existsSync(declPath)){
-        fs.mkdirSync(declPath);
-    };
-    const fileName = path.join(declPath, 'index.d.ts');
-    var request = https.get(loadPath, function (response) {
-        if (response.statusCode == 200){
-            var file = fs.createWriteStream(fileName);
-            response.pipe(file);
-            file.on('finish', function () {
-                file.close();
-                ShowDTSDownloadSuccess();
-            });
-            request.on('error', err => {
-            fs.unlink(fileName, () => ShowDTSDownloadError(err));
-            });
+function CheckDTSUpdate() {
+    var folders = vscode.workspace.workspaceFolders;
+    if (folders && folders.length > 0) {
+        var folder = folders[0].uri.fsPath;
+        CheckForDeclarationFilesUpdate(folder);
+    }
+}
 
-            file.on('error', err => {
-            fs.unlink(fileName, () => ShowDTSDownloadError(err));
-            });
+function CheckForDeclarationFilesUpdate(folder) {
+    let fileName = path.join(folder, 'node_modules/@types/bazis/index.d.ts');
+    console.log(fileName);
+    let fileDate = 0;
+    if (fs.existsSync(fileName)) {
+        var stats = fs.statSync(fileName);
+        fileDate = Date.parse(<any>stats.ctime);
+    }
+    const link  = 'https://github.com/BazisSoft/Scripts/blob/master/node_modules/%40types/bazis/index.d.ts';
+    https.get(link, (response) => {
+        let data = '';
+        if (response.statusCode == 200) {
+            response.on('error', (err)=>{
+                vscode.window.showInformationMessage(err.message);
+            })
+            response.on('data', (chunk) => {
+                data += chunk.toString();
+            })
+            response.on('end', () => {
+                var matchResult = data.match(/relative-time datetime="(.*)" /);
+                if (matchResult && matchResult.length > 1) {
+                    var res = matchResult[1];
+                    var date = Date.parse(res);
+                    if (date > fileDate) {
+                        let download = 'Обновить';
+                        let later = "Напомнить позже";
+                        vscode.window.showInformationMessage('Доступно обновление файла определений для скриптов', download, later).then((choice) => {
+                            if (choice == download) {
+                                addDeclarationFiles();
+                            }
+                        })
+                    }
+                }
+            })
         }
-        else{
-            ShowDTSDownloadError(response.statusCode + ':' + response.statusMessage);
-            file.close();
+        else {
+            //silently ignore
         }
     });
+}
+
+function addDeclarationFiles() {
+    var folders = vscode.workspace.workspaceFolders;
+    if (folders && folders.length > 0) {
+        var folder = folders[0].uri.fsPath;
+        const loadPath = 'https://raw.githubusercontent.com/BazisSoft/Scripts/master/node_modules/%40types/bazis/index.d.ts';
+        //create directories
+        //TODO: find better way, if it exists
+        let declPath = path.join(folder, '/node_modules');
+        if (!fs.existsSync(declPath)){
+            fs.mkdirSync(declPath);
+        };
+        declPath = path.join(declPath, '/@types');
+        if (!fs.existsSync(declPath)){
+            fs.mkdirSync(declPath);
+        };
+        declPath = path.join(declPath, '/bazis');
+        if (!fs.existsSync(declPath)){
+            fs.mkdirSync(declPath);
+        };
+        const fileName = path.join(declPath, 'index.d.ts');
+        var request = https.get(loadPath, function (response) {
+            if (response.statusCode == 200){
+                var file = fs.createWriteStream(fileName);
+                response.pipe(file);
+                file.on('finish', function () {
+                    file.close();
+                    ShowDTSDownloadSuccess();
+                });
+                request.on('error', err => {
+                fs.unlink(fileName, () => ShowDTSDownloadError(err));
+                });
+
+                file.on('error', err => {
+                fs.unlink(fileName, () => ShowDTSDownloadError(err));
+                });
+            }
+            else{
+                ShowDTSDownloadError(response.statusCode + ':' + response.statusMessage);
+                file.close();
+            }
+        });
+    }
 }
 
 const initialConfigurations = [
@@ -149,6 +202,7 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(vscode.commands.registerCommand('extension.bazis-debug2.addDeclarationFiles', addDeclarationFiles));
     context.subscriptions.push(vscode.commands.registerCommand('extension.bazis-debug2.provideInitialConfigurations', provideInitialConfigurations));
     context.subscriptions.push(vscode.commands.registerCommand('extension.bazis-debug2.toggleSkippingFile', toggleSkippingFile));
+    CheckDTSUpdate();
 }
 
 export function deactivate() {
