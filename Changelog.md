@@ -1,12 +1,13 @@
-﻿
-## Version 0.1.2
-  - fixed debugging with remote script path
+﻿## Версия 0.1.3
+  - Добавлена информация о настройке конфигурации отладки в файл README
+  - Русифицирована часть текстов расширения
 
-## Version 0.1.1
-  - added command to download declaration files
-  - added initial debug configuration
-  - changed download path to master branch
-  - fixed initial configuration
+## Версия 0.1.2
+  - Исправлена отладка скриптов, размещённых не на локальном компьютере
 
-## Version 0.1.0
-  - First release
+## Версия 0.1.1
+  - Добавлена команда загрузки/обновления файлов определений
+  - Добавлена стандртная конфигурация отладки
+
+## Версия 0.1.0
+  - Первый релиз

@@ -1,9 +1,9 @@
 {
   "name": "bazis-debug2",
   "displayName": "Debugger for Bazis-Woodworker's scripts",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "publisher": "BazisSoft",
-  "description": "%extension.description%",
+  "description": "Расширение для отлакди скриптов в Базис 2021",
   "icon": "images/bazis-logo.png",
   "categories": [
     "Debuggers"
@@ -402,7 +402,7 @@
       },
       {
         "command": "extension.bazis-debug2.addDeclarationFiles",
-        "title": "Add/update declaration file *.d.ts for Bazis-Woodworker"
+        "title": "Добавить/обновить файлы определений *.d.ts для Базис-Мебельщик 2021"
       }
     ],
     "keybindings": [
